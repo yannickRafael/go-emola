@@ -10,12 +10,18 @@ import (
 
 	"github.com/coffebit/go-emola/internal/soap"
 	"github.com/coffebit/go-emola/pkg/config"
+	"github.com/coffebit/go-emola/pkg/payment"
 )
 
 // Client is the main interface for interacting with the e-Mola service.
 type Client struct {
 	config     *config.Config
 	httpClient *http.Client
+}
+
+// Payment returns the Customer-to-Business (C2B) service instance.
+func (c *Client) Payment() *payment.Service {
+	return payment.NewService(c)
 }
 
 // NewClient creates a new e-Mola API client with the given configuration.
@@ -36,8 +42,13 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}, nil
 }
 
-// call is the internal method for dispatching a SOAP request.
-func (c *Client) call(ctx context.Context, wscode, paramXML string) (*soap.DetailResponse, error) {
+// Config returns the client's configuration.
+func (c *Client) Config() *config.Config {
+	return c.config
+}
+
+// CallSOAP is the internal method for dispatching a SOAP request.
+func (c *Client) CallSOAP(ctx context.Context, wscode, paramXML string) (*soap.DetailResponse, error) {
 	envelope := soap.NewEnvelope(c.config.Username, c.config.Password, wscode, paramXML)
 
 	xmlBytes, err := xml.MarshalIndent(envelope, "", "  ")
