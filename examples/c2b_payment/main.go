@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	emola "github.com/coffeebit/go-emola"
-	"github.com/coffeebit/go-emola/pkg/config"
-	"github.com/coffeebit/go-emola/pkg/payment"
+	emola "github.com/yannickRafael/go-emola"
+	"github.com/yannickRafael/go-emola/pkg/config"
+	"github.com/yannickRafael/go-emola/pkg/payment"
 )
 
 func main() {
