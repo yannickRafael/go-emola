@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/coffebit/go-emola/internal/soap"
-	"github.com/coffebit/go-emola/pkg/config"
-	"github.com/coffebit/go-emola/pkg/payment"
+	"github.com/coffeebit/go-emola/internal/soap"
+	"github.com/coffeebit/go-emola/pkg/config"
+	"github.com/coffeebit/go-emola/pkg/payment"
 )
 
 // Client is the main interface for interacting with the e-Mola service.

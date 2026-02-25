@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/coffebit/go-emola/internal/soap"
-	"github.com/coffebit/go-emola/pkg/config"
+	"github.com/coffeebit/go-emola/internal/soap"
+	"github.com/coffeebit/go-emola/pkg/config"
 )
 
 // SOAPCaller defines the interface the Service requires from the base client.
