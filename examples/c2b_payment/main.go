@@ -24,6 +24,7 @@ func main() {
 	refName := flag.String("ref", fmt.Sprintf("ORD-%d", time.Now().Unix()), "Unique Reference string (default is timestamp-based)")
 	content := flag.String("content", "Payment via CLI Tool", "SMS content to show")
 	envStr := flag.String("env", "UAT", "Environment: UAT or PROD")
+	verbose := flag.Bool("verbose", false, "Print raw HTTP response from gateway")
 	flag.Parse()
 
 	if *phone == "" || *amount == "" {
@@ -57,6 +58,11 @@ func main() {
 	client, err := emola.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize e-Mola client: %v", err)
+	}
+
+	if *verbose {
+		fmt.Println("VERBOSE MODE: Enabled")
+		os.Setenv("EMOLA_VERBOSE", "true")
 	}
 
 	// Step 3: Prepare the payment request

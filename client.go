@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/yannickRafael/go-emola/internal/soap"
 	"github.com/yannickRafael/go-emola/pkg/config"
@@ -75,6 +76,10 @@ func (c *Client) CallSOAP(ctx context.Context, wscode string, params []soap.Para
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if os.Getenv("EMOLA_VERBOSE") == "true" {
+		fmt.Printf("\n--- [VERBOSE RAW XML RESPONSE FROM MOVITEL] ---\n%s\n-----------------------------------------------\n", string(bodyBytes))
 	}
 
 	if resp.StatusCode != http.StatusOK {
