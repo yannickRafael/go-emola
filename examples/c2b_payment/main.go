@@ -8,12 +8,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	emola "github.com/yannickRafael/go-emola"
 	"github.com/yannickRafael/go-emola/pkg/config"
 	"github.com/yannickRafael/go-emola/pkg/payment"
 )
 
 func main() {
+	// Attempt to load .env file if it exists. Ignore if it doesn't.
+	_ = godotenv.Load()
+
 	// Define command-line flags
 	phone := flag.String("phone", "", "Customer phone number (e.g., 861234567)")
 	amount := flag.String("amount", "", "Amount to charge (e.g., 500)")
