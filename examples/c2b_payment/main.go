@@ -69,18 +69,23 @@ func main() {
 	}
 
 	fmt.Printf("Initiating C2B USSD Push for %s MT to %s (Ref: %s)...\n", req.Amount, req.Phone, req.Reference)
+	fmt.Println("Connecting to Movitel Gateway...")
 	fmt.Println("Waiting for customer to enter PIN (or e-Mola async response)...")
 
 	// Step 4: Call the Payment service
 	// This will block for up to 60 seconds while the customer enters their PIN
 	ctx := context.Background()
+
+	startTime := time.Now()
 	resp, err := client.Payment().Receive(ctx, req)
+	elapsed := time.Since(startTime)
+
 	if err != nil {
-		log.Fatalf("Payment call failed (Network/VPN error?): %v", err)
+		log.Fatalf("\n❌ Payment call failed after %v: %v", elapsed, err)
 	}
 
 	// Step 5: Handle the response
-	fmt.Println("\n--- Transaction Complete ---")
+	fmt.Printf("\n--- Transaction Complete (Took %v) ---\n", elapsed)
 	fmt.Printf("Transaction ID: %s\n", resp.TransID)
 	fmt.Printf("Error Code:     %s\n", resp.ErrorCode)
 	fmt.Printf("Message:        %s\n", resp.Message)

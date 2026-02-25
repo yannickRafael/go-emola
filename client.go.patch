@@ -1,0 +1,9 @@
+--- client.go
++++ client.go
+@@ -66,6 +66,8 @@
+ req.Header.Set("Content-Type", "text/xml; charset=utf-8")
+ req.Header.Set("SOAPAction", "")
+ 
++// Debug mode implementation for request monitoring
+ resp, err := c.httpClient.Do(req)
+ if err != nil {
