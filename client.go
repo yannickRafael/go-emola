@@ -64,10 +64,25 @@ func (c *Client) CallSOAP(ctx context.Context, wscode string, params []soap.Para
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-	req.Header.Set("SOAPAction", "")
+	if os.Getenv("EMOLA_VERBOSE") == "true" {
+		fmt.Printf("\n--- [VERBOSE OUTGOING XML REQUEST] ---\n%s\n--------------------------------------\n", string(payload))
+	}
+
+	req.Header.Set("Content-Type", "text/xml")
+	req.Header.Set("SOAPAction", "#POST") // Must match Postman: SOAPAction: #POST
+
+	if os.Getenv("EMOLA_VERBOSE") == "true" {
+		fmt.Println("[VERBOSE] Sending HTTP request to:", c.config.URL())
+	}
 
 	resp, err := c.httpClient.Do(req)
+	if os.Getenv("EMOLA_VERBOSE") == "true" {
+		if err != nil {
+			fmt.Printf("[VERBOSE] HTTP call returned an error: %v\n", err)
+		} else {
+			fmt.Printf("[VERBOSE] HTTP response received. Status: %s\n", resp.Status)
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
