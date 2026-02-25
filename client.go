@@ -86,13 +86,15 @@ func (c *Client) CallSOAP(ctx context.Context, wscode, paramXML string) (*soap.D
 		return nil, fmt.Errorf("failed to unmarshal SOAP response: %w", err)
 	}
 
-	// Double-parse the 'return' element which contains nested XML
-	var detail soap.DetailResponse
-	if soapResp.Body.ProcessResp.Return == "" {
-		return nil, fmt.Errorf("empty return data in SOAP response")
+	// The server returns the inner XML as a string inside <Result>.
+	// We unmarshal that string into DetailResponse to get errorCode, message, transId etc.
+	resultStr := soapResp.Body.GwOperationResp.Result
+	if resultStr == "" {
+		return nil, fmt.Errorf("empty Result in SOAP response (possible auth failure or IP not whitelisted)")
 	}
 
-	if err := xml.Unmarshal([]byte(soapResp.Body.ProcessResp.Return), &detail); err != nil {
+	var detail soap.DetailResponse
+	if err := xml.Unmarshal([]byte(resultStr), &detail); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal inner detail response: %w", err)
 	}
 

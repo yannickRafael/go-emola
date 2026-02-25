@@ -18,17 +18,18 @@ type Header struct {
 
 // Body contains the actual function call.
 type Body struct {
-	XMLName xml.Name `xml:"soapenv:Body"`
-	Process Process  `xml:"web:process"`
+	XMLName     xml.Name    `xml:"soapenv:Body"`
+	GwOperation GwOperation `xml:"web:gwOperation"`
 }
 
-// Process maps to the Movitel USSD Push API format.
-type Process struct {
+// GwOperation maps to the Movitel BCCS Gateway API format.
+// The operation name is gwOperation as declared in the WSDL.
+type GwOperation struct {
 	Username string `xml:"username"`
 	Password string `xml:"password"`
 	Wscode   string `xml:"wscode"`
 	Param    string `xml:"param"`
-	RawData  string `xml:"rawData,omitempty"`
+	RawData  string `xml:"rawData"`
 }
 
 // ResponseEnvelope represents the envelope returned by Movitel.
@@ -38,13 +39,12 @@ type ResponseEnvelope struct {
 }
 
 type ResponseBody struct {
-	ProcessResp ProcessResponse `xml:"processResponse"`
+	GwOperationResp GwOperationResponse `xml:"gwOperationResponse"`
 }
 
-// ProcessResponse contains the immediate result with escaped XML.
-type ProcessResponse struct {
-	Return   string `xml:"return"`
-	Original string `xml:"original"`
+// GwOperationResponse contains the Result tag from Movitel.
+type GwOperationResponse struct {
+	Result string `xml:"Result"`
 }
 
 // DetailResponse represents the parsed content of the <return> tag.
@@ -60,13 +60,14 @@ type DetailResponse struct {
 func NewEnvelope(username, password, wscode, paramXML string) *Envelope {
 	return &Envelope{
 		Xmlns: "http://schemas.xmlsoap.org/soap/envelope/",
-		Web:   "http://webservice.com/",
+		Web:   "http://webservice.bccsgw.viettel.com/", // Correct namespace from WSDL
 		Body: Body{
-			Process: Process{
+			GwOperation: GwOperation{
 				Username: username,
 				Password: password,
 				Wscode:   wscode,
 				Param:    paramXML,
+				RawData:  "",
 			},
 		},
 	}
