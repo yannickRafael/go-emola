@@ -67,19 +67,40 @@ type ResultPayload struct {
 	GwTransID string `xml:"gwtransid"`
 }
 
-// DetailResponse represents the parsed content of the inner result string (from <original>).
-// These are the transaction-level fields. The <return> tag is nested *inside* the <original> string payload.
-type DetailResponse struct {
-	// Let's grab the fields from the unescaped inner XML:
-	// <ns2:pushUssdMessageResponse><return><errorCode>14</errorCode> ...
+// InnerEnvelope represents the full inner SOAP envelope found inside <original>.
+// The structure is:
+//
+//	<S:Envelope>
+//	  <S:Body>
+//	    <ns2:pushUssdMessageResponse>
+//	      <return><errorCode>22</errorCode>...</return>
+//	    </ns2:pushUssdMessageResponse>
+//	  </S:Body>
+//	</S:Envelope>
+type InnerEnvelope struct {
+	XMLName xml.Name  `xml:"Envelope"`
+	Body    InnerBody `xml:"Body"`
+}
+
+type InnerBody struct {
+	Response InnerResponse `xml:"pushUssdMessageResponse"`
+}
+
+type InnerResponse struct {
 	Return DetailResponseContent `xml:"return"`
 }
 
-// DetailResponseContent holds the actual fields inside the inner <return> element.
+// DetailResponse is the final parsed result returned to the caller.
+type DetailResponse struct {
+	Return DetailResponseContent
+}
+
+// DetailResponseContent holds the actual transaction-level fields.
+// NOTE: The API has a typo - it sends 'reqeustId' (not 'requestId').
 type DetailResponseContent struct {
-	ErrorCode string `xml:"errorCode"` // 0 = Success, 10 = ISDN not in white list, 22 = Async Push message done
-	Message   string `xml:"message"`   // Human readable description
-	RequestID string `xml:"reqeustId"` // Notice the typo from the API server: "reqeustId" instead of "requestId"!
+	ErrorCode string `xml:"errorCode"` // "0" = Success, "22" = Async, "11" = Timeout, etc.
+	Message   string `xml:"message"`
+	RequestID string `xml:"reqeustId"` // Intentional API typo: reqeustId
 }
 
 // NewEnvelope creates a properly formatted SOAP Envelope.

@@ -118,10 +118,12 @@ func (c *Client) CallSOAP(ctx context.Context, wscode string, params []soap.Para
 	}
 
 	// Second layer: unmarshal the inner XML found inside <original>
-	var detail soap.DetailResponse
-	if err := xml.Unmarshal([]byte(resultObj.Original), &detail); err != nil {
+	// The inner payload is a full SOAP envelope:
+	// <S:Envelope> > <S:Body> > <ns2:pushUssdMessageResponse> > <return>
+	var innerEnv soap.InnerEnvelope
+	if err := xml.Unmarshal([]byte(resultObj.Original), &innerEnv); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal inner detail response: %w", err)
 	}
 
-	return &detail, nil
+	return &soap.DetailResponse{Return: innerEnv.Body.Response.Return}, nil
 }
