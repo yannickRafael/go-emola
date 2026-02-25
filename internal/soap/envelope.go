@@ -7,7 +7,7 @@ type Envelope struct {
 	XMLName xml.Name `xml:"soapenv:Envelope"`
 	Xmlns   string   `xml:"xmlns:soapenv,attr"`
 	Web     string   `xml:"xmlns:web,attr"`
-	Header  *Header  `xml:"soapenv:Header,omitempty"`
+	Header  Header   `xml:"soapenv:Header"`
 	Body    Body
 }
 
@@ -85,8 +85,9 @@ type DetailResponseContent struct {
 // NewEnvelope creates a properly formatted SOAP Envelope.
 func NewEnvelope(username, password, wscode string, params []Param) *Envelope {
 	return &Envelope{
-		Xmlns: "http://schemas.xmlsoap.org/soap/envelope/",
-		Web:   "http://webservice.bccsgw.viettel.com/", // Correct namespace from WSDL
+		Xmlns:  "http://schemas.xmlsoap.org/soap/envelope/",
+		Web:    "http://webservice.bccsgw.viettel.com/",
+		Header: Header{},
 		Body: Body{
 			GwOperation: GwOperation{
 				Input: Input{
