@@ -62,10 +62,10 @@ func (s *Service) Receive(ctx context.Context, req *Request) (*Response, error) 
 	}
 
 	return &Response{
-		TransID:   detail.TransID,
-		RequestID: detail.RequestID,
-		ErrorCode: detail.ErrorCode,
-		Message:   detail.Message,
+		TransID:   req.Reference, // Movitel doesn't echo transId back reliably in this call, so we use our own request ref
+		RequestID: detail.Return.RequestID,
+		ErrorCode: detail.Return.ErrorCode,
+		Message:   detail.Return.Message,
 	}, nil
 }
 

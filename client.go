@@ -80,21 +80,26 @@ func (c *Client) CallSOAP(ctx context.Context, wscode string, params []soap.Para
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
-
+	// First layer: parse the SOAP envelope into our structures
 	var soapResp soap.ResponseEnvelope
 	if err := xml.Unmarshal(bodyBytes, &soapResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal SOAP response: %w", err)
 	}
 
-	// The server returns the inner XML as a string inside <Result>.
-	// We unmarshal that string into DetailResponse to get errorCode, message, transId etc.
-	resultStr := soapResp.Body.GwOperationResp.Result
-	if resultStr == "" {
-		return nil, fmt.Errorf("empty Result in SOAP response (possible auth failure or IP not whitelisted)")
+	resultObj := soapResp.Body.GwOperationResp.Result
+
+	// Check gateway-level error (e.g., login failed)
+	if resultObj.Error != "0" {
+		return nil, fmt.Errorf("gateway rejected request (errorCode: %s)", resultObj.Error)
 	}
 
+	if resultObj.Original == "" {
+		return nil, fmt.Errorf("empty <original> payload in SOAP response despite gateway success")
+	}
+
+	// Second layer: unmarshal the inner XML found inside <original>
 	var detail soap.DetailResponse
-	if err := xml.Unmarshal([]byte(resultStr), &detail); err != nil {
+	if err := xml.Unmarshal([]byte(resultObj.Original), &detail); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal inner detail response: %w", err)
 	}
 
