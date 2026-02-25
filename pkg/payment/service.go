@@ -39,14 +39,20 @@ func (s *Service) Receive(ctx context.Context, req *Request) (*Response, error) 
 		content = cfg.PartnerCode // Default to Partner Name if empty
 	}
 
+	lang := req.Language
+	if lang == "" {
+		lang = "pt" // Default to Portuguese for Mozambique
+	}
+
 	// Construct the raw XML for the 'param' field
 	paramXML := fmt.Sprintf(
-		"<msisdn>%s</msisdn><transId>%s</transId><transAmount>%s</transAmount><partnerCode>%s</partnerCode><smsContent>%s</smsContent><language>en</language><key>%s</key><refNo>%s</refNo>",
+		"<msisdn>%s</msisdn><transId>%s</transId><transAmount>%s</transAmount><partnerCode>%s</partnerCode><smsContent>%s</smsContent><language>%s</language><key>%s</key><refNo>%s</refNo>",
 		escapeXML(req.Phone),
-		escapeXML(req.Reference), // Using Reference as TransID
+		escapeXML(req.Reference),
 		escapeXML(req.Amount),
 		escapeXML(cfg.PartnerCode),
 		escapeXML(content),
+		escapeXML(lang),
 		escapeXML(cfg.PartnerKey),
 		escapeXML(req.Reference),
 	)
@@ -59,6 +65,7 @@ func (s *Service) Receive(ctx context.Context, req *Request) (*Response, error) 
 
 	return &Response{
 		TransID:   detail.TransID,
+		RequestID: detail.RequestID,
 		ErrorCode: detail.ErrorCode,
 		Message:   detail.Message,
 	}, nil
