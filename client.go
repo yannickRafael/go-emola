@@ -48,8 +48,8 @@ func (c *Client) Config() *config.Config {
 }
 
 // CallSOAP is the internal method for dispatching a SOAP request.
-func (c *Client) CallSOAP(ctx context.Context, wscode, paramXML string) (*soap.DetailResponse, error) {
-	envelope := soap.NewEnvelope(c.config.Username, c.config.Password, wscode, paramXML)
+func (c *Client) CallSOAP(ctx context.Context, wscode string, params []soap.Param) (*soap.DetailResponse, error) {
+	envelope := soap.NewEnvelope(c.config.Username, c.config.Password, wscode, params)
 
 	xmlBytes, err := xml.MarshalIndent(envelope, "", "  ")
 	if err != nil {

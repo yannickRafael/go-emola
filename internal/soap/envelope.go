@@ -25,11 +25,22 @@ type Body struct {
 // GwOperation maps to the Movitel BCCS Gateway API format.
 // The operation name is gwOperation as declared in the WSDL.
 type GwOperation struct {
-	Username string `xml:"username"`
-	Password string `xml:"password"`
-	Wscode   string `xml:"wscode"`
-	Param    string `xml:"param"`
-	RawData  string `xml:"rawData"`
+	Input Input `xml:"Input"`
+}
+
+// Input wraps the actual payload.
+type Input struct {
+	Username string  `xml:"username"`
+	Password string  `xml:"password"`
+	Wscode   string  `xml:"wscode"`
+	Params   []Param `xml:"param"`
+	RawData  string  `xml:"rawData"` // Can be empty or "?" depending on the call
+}
+
+// Param represents a single key-value request parameter.
+type Param struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:"value,attr"`
 }
 
 // ResponseEnvelope represents the envelope returned by Movitel.
@@ -60,17 +71,19 @@ type DetailResponse struct {
 }
 
 // NewEnvelope creates a properly formatted SOAP Envelope.
-func NewEnvelope(username, password, wscode, paramXML string) *Envelope {
+func NewEnvelope(username, password, wscode string, params []Param) *Envelope {
 	return &Envelope{
 		Xmlns: "http://schemas.xmlsoap.org/soap/envelope/",
 		Web:   "http://webservice.bccsgw.viettel.com/", // Correct namespace from WSDL
 		Body: Body{
 			GwOperation: GwOperation{
-				Username: username,
-				Password: password,
-				Wscode:   wscode,
-				Param:    paramXML,
-				RawData:  "",
+				Input: Input{
+					Username: username,
+					Password: password,
+					Wscode:   wscode,
+					Params:   params,
+					RawData:  "?", // Postman uses "?" or "" for rawData. Using "?" to match withdrawing operations
+				},
 			},
 		},
 	}

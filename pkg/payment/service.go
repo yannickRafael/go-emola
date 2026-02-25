@@ -3,7 +3,6 @@ package payment
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/yannickRafael/go-emola/internal/soap"
 	"github.com/yannickRafael/go-emola/pkg/config"
@@ -12,7 +11,7 @@ import (
 // SOAPCaller defines the interface the Service requires from the base client.
 type SOAPCaller interface {
 	Config() *config.Config
-	CallSOAP(ctx context.Context, wscode, paramXML string) (*soap.DetailResponse, error)
+	CallSOAP(ctx context.Context, wscode string, params []soap.Param) (*soap.DetailResponse, error)
 }
 
 // Service handles Customer-to-Business (C2B) payments via USSD Push.
@@ -44,21 +43,20 @@ func (s *Service) Receive(ctx context.Context, req *Request) (*Response, error) 
 		lang = "pt" // Default to Portuguese for Mozambique
 	}
 
-	// Construct the raw XML for the 'param' field
-	paramXML := fmt.Sprintf(
-		"<msisdn>%s</msisdn><transId>%s</transId><transAmount>%s</transAmount><partnerCode>%s</partnerCode><smsContent>%s</smsContent><language>%s</language><key>%s</key><refNo>%s</refNo>",
-		escapeXML(req.Phone),
-		escapeXML(req.Reference),
-		escapeXML(req.Amount),
-		escapeXML(cfg.PartnerCode),
-		escapeXML(content),
-		escapeXML(lang),
-		escapeXML(cfg.PartnerKey),
-		escapeXML(req.Reference),
-	)
+	// Construct the parameters matching the <param name="x" value="y"/> structure
+	params := []soap.Param{
+		{Name: "msisdn", Value: req.Phone},
+		{Name: "smsContent", Value: content},
+		{Name: "transAmount", Value: req.Amount},
+		{Name: "transId", Value: req.Reference},
+		{Name: "language", Value: lang},
+		{Name: "refNo", Value: req.Reference},
+		{Name: "partnerCode", Value: cfg.PartnerCode},
+		{Name: "key", Value: cfg.PartnerKey},
+	}
 
 	// Call the generic SOAP dispatcher
-	detail, err := s.client.CallSOAP(ctx, "pushUssdMessage", paramXML)
+	detail, err := s.client.CallSOAP(ctx, "pushUssdMessage", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute payment: %w", err)
 	}
@@ -71,12 +69,5 @@ func (s *Service) Receive(ctx context.Context, req *Request) (*Response, error) 
 	}, nil
 }
 
-// escapeXML is a simple helper to prevent XML injection in basic fields.
-func escapeXML(s string) string {
-	s = strings.ReplaceAll(s, "&", "&amp;")
-	s = strings.ReplaceAll(s, "<", "&lt;")
-	s = strings.ReplaceAll(s, ">", "&gt;")
-	s = strings.ReplaceAll(s, "\"", "&quot;")
-	s = strings.ReplaceAll(s, "'", "&#39;")
-	return s
-}
+// We no longer need escapeXML here because Go's xml.Marshal handles escaping
+// attributes safely automatically when encoding soap.Param structures!
