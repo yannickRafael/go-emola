@@ -23,7 +23,10 @@ func main() {
 	// Define command-line flags
 	phone := flag.String("phone", "", "Customer phone number (e.g., 861234567)")
 	amount := flag.String("amount", "", "Amount to charge (e.g., 500)")
-	refName := flag.String("ref", fmt.Sprintf("ORD-%d", time.Now().Unix()), "Unique Reference string (default is timestamp-based)")
+	// e-Mola API Specification states transId minimum is 15 chars, and refNo is exactly 20 chars.
+	// E.g., "ORD" (3) + Timestamp (10) + Random (7) = 20 chars
+	defaultRef := fmt.Sprintf("ORD%d%07d", time.Now().Unix(), time.Now().Nanosecond()%10000000)
+	refName := flag.String("ref", defaultRef, "Unique Reference string (should be exactly 20 chars)")
 	content := flag.String("content", "Payment via CLI Tool", "SMS content to show")
 	envStr := flag.String("env", "UAT", "Environment: UAT or PROD")
 	verbose := flag.Bool("verbose", false, "Print raw HTTP request and response for debugging")
