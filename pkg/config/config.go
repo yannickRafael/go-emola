@@ -30,23 +30,16 @@ type Config struct {
 // URL resolves the endpoint based on the selected environment.
 func (c *Config) URL() string {
 	// 1. Check for a global override
-	if os.Getenv("EMOLA_BASE_URL") != "" {
-		return os.Getenv("EMOLA_BASE_URL")
+	if url := os.Getenv("EMOLA_BASE_URL"); url != "" {
+		return url
 	}
 
 	// 2. Resolve based on Environment
 	if c.Environment == EnvPROD {
-		if url := os.Getenv("EMOLA_PROD_URL"); url != "" {
-			return url
-		}
-		return "http://10.229.16.30:9821/BCCSGateway/BCCSGateway"
+		return os.Getenv("EMOLA_PROD_URL")
 	}
 
-	// Default to UAT
-	if url := os.Getenv("EMOLA_UAT_URL"); url != "" {
-		return url
-	}
-	return "http://10.229.16.29:8520/BCCSGateway/BCCSGateway"
+	return os.Getenv("EMOLA_UAT_URL")
 }
 
 // Validate ensures all required configuration is present before starting.
@@ -66,5 +59,14 @@ func (c *Config) Validate() error {
 	if c.Environment != EnvPROD && c.Environment != EnvUAT {
 		return errors.New("emola config: Environment must be EnvUAT or EnvPROD")
 	}
+
+	// Ensure a URL is available
+	if c.URL() == "" {
+		if c.Environment == EnvPROD {
+			return errors.New("emola config: EMOLA_PROD_URL (or EMOLA_BASE_URL) is required for Production")
+		}
+		return errors.New("emola config: EMOLA_UAT_URL (or EMOLA_BASE_URL) is required for UAT")
+	}
+
 	return nil
 }
