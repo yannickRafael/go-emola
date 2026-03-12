@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"os"
 	"time"
 )
 
@@ -28,8 +29,13 @@ type Config struct {
 
 // URL resolves the endpoint based on the selected environment.
 func (c *Config) URL() string {
+	// If a custom URL is provided in environment, use it (highest priority)
+	if os.Getenv("EMOLA_BASE_URL") != "" {
+		return os.Getenv("EMOLA_BASE_URL")
+	}
+
 	if c.Environment == EnvPROD {
-		return "http://10.229.16.30:9821/BCCSGateway/BCCSGateway" // Using primary Prod IP
+		return "http://10.229.16.30:9821/BCCSGateway/BCCSGateway"
 	}
 	// Default to UAT
 	return "http://10.229.16.29:8520/BCCSGateway/BCCSGateway"
