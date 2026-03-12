@@ -29,15 +29,23 @@ type Config struct {
 
 // URL resolves the endpoint based on the selected environment.
 func (c *Config) URL() string {
-	// If a custom URL is provided in environment, use it (highest priority)
+	// 1. Check for a global override
 	if os.Getenv("EMOLA_BASE_URL") != "" {
 		return os.Getenv("EMOLA_BASE_URL")
 	}
 
+	// 2. Resolve based on Environment
 	if c.Environment == EnvPROD {
+		if url := os.Getenv("EMOLA_PROD_URL"); url != "" {
+			return url
+		}
 		return "http://10.229.16.30:9821/BCCSGateway/BCCSGateway"
 	}
+
 	// Default to UAT
+	if url := os.Getenv("EMOLA_UAT_URL"); url != "" {
+		return url
+	}
 	return "http://10.229.16.29:8520/BCCSGateway/BCCSGateway"
 }
 
