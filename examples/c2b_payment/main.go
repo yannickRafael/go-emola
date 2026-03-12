@@ -17,18 +17,19 @@ import (
 )
 
 func main() {
-	// Attempt to load .env file if it exists. Ignore if it doesn't.
+	// Attempt to load .env file if it exists.
 	_ = godotenv.Load()
 
 	// Define command-line flags
 	phone := flag.String("phone", "", "Customer phone number (e.g., 861234567)")
 	amount := flag.String("amount", "", "Amount to charge (e.g., 500)")
+	
 	// e-Mola API Specification states transId minimum is 15 chars, and refNo is exactly 20 chars.
-	// E.g., "ORD" (3) + Timestamp (10) + Random (7) = 20 chars
 	defaultRef := fmt.Sprintf("ORD%d%07d", time.Now().Unix(), time.Now().Nanosecond()%10000000)
 	refName := flag.String("ref", defaultRef, "Unique Reference string (should be exactly 20 chars)")
+	
 	content := flag.String("content", "Payment via CLI Tool", "SMS content to show")
-	envStr := flag.String("env", "UAT", "Environment: UAT or PROD")
+	envFlag := flag.String("env", "", "Environment: UAT or PROD (overrides .env)")
 	verbose := flag.Bool("verbose", false, "Print raw HTTP request and response for debugging")
 	callbackPort := flag.String("callback-port", "", "If set, starts a local webhook listener on this port (e.g. 8080)")
 	flag.Parse()
@@ -39,8 +40,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Environment Selection Priority: 1. Flag -> 2. Environment Variable -> 3. Default (UAT)
+	envInput := *envFlag
+	if envInput == "" {
+		envInput = os.Getenv("EMOLA_ENVIRONMENT")
+	}
+	if envInput == "" {
+		envInput = "UAT"
+	}
+
 	env := config.EnvUAT
-	if *envStr == "PROD" {
+	if envInput == "PROD" {
 		env = config.EnvPROD
 	}
 
@@ -59,12 +69,11 @@ func main() {
 	}
 
 	if *verbose {
-		fmt.Println("[DEBUG] Verbose mode enabled")
+		fmt.Printf("[DEBUG] Verbose mode enabled (Env: %s)\n", env)
 		os.Setenv("EMOLA_VERBOSE", "true")
 	}
 
 	// Step 2: (Optional) Start webhook listener in a background goroutine
-	// This lets a single binary both send the request and receive the callback.
 	if *callbackPort != "" {
 		callbackReceived := make(chan *webhook.CallbackRequest, 1)
 
@@ -86,10 +95,9 @@ func main() {
 			}
 		}()
 
-		// Give the server a moment to start
 		time.Sleep(100 * time.Millisecond)
 
-		// Step 3: Prepare and send the payment request
+		// Step 3: Prepare the payment request
 		req := &payment.Request{
 			Phone:     *phone,
 			Amount:    *amount,
@@ -130,7 +138,7 @@ func main() {
 			return
 		}
 
-		// Step 4: Wait for the callback and print the result
+		// Step 4: Wait for the callback
 		select {
 		case cb := <-callbackReceived:
 			fmt.Println("\n🔔 CALLBACK RECEIVED FROM MOVITEL!")
@@ -152,7 +160,7 @@ func main() {
 		}
 
 	} else {
-		// No callback port — simple fire-and-forget mode (just shows the gateway's immediate response)
+		// No callback port — simple fire-and-forget mode
 		client, err := emola.NewClient(cfg)
 		if err != nil {
 			log.Fatalf("Failed to initialize e-Mola client: %v", err)
